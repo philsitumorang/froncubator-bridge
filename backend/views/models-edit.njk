@@ -1,0 +1,86 @@
+{% extends './layout.njk' %}
+
+{% block content %}
+
+<form action="/admin/model/edit/save" method="post">
+    <div class="controls-2 text-left">
+        <h3>Edit <# query.model #></h3>
+    </div>
+
+    <div class="f-form">
+
+        <div class="content-block-center">
+            {% for s in data[0].modelSchema %}
+                {% if s.name != 'id' and s.name != '__v' %}
+                    {% if s.component == 'input-text' %}
+                        <div class="form-group">
+                            <label><# s.verb_name or s.name #></label>
+                            <input type="text" name="<# s.name #>" autocomplete="new-password" value="<# data[0][s.name] #>">
+                        </div>
+                    {% elif s.component == 'input-password' %}
+                        <div class="form-group">
+                            <label><# s.verb_name or s.name #></label>
+                            <input type="password" name="<# s.name #>" autocomplete="new-password" value="<# data[0][s.name] #>">
+                        </div>
+                    {% elif s.component == 'input-file' %}
+                        {% include './partials/uploadfile.njk' %}
+                    {% elif s.component == 'input-image' %}
+                        {% include './partials/uploadimage.njk' %}
+                    {% elif s.component == 'textarea' %}
+                        <div class="form-group">
+                            <label><# s.verb_name or s.name #></label>
+                            <textarea name="<# s.name #>"><# data[0][s.name] #></textarea>
+                        </div>
+                    {% elif s.component == 'textarea-rich' %}
+                        <div class="form-group">
+                            {% include './partials/textarea-rich.njk' %}
+                        </div>
+                    {% elif s.component == 'select' or s.component == 'select-multy' %}
+                        <div class="form-group">
+                            {% include './partials/select.njk' %}
+                        </div>
+                    {% elif s.component == 'checkbox' %}
+                        <div class="form-group">
+                            {% include './partials/checkbox.njk' %}
+                        </div>
+                    {% endif %}
+                {% endif %}
+            {% endfor %}
+            {% if adminUser.roleRate <= 30 %}
+            <div class="form-group form-controls">
+                <input type="hidden" name="model" value="<# query.model #>">
+                <input type="hidden" name="_id" value="<# query._id #>">
+                <button type="submit" class="btn btn-primary">save</button>
+                <button type="button" class="delete-record-bottom btn btn-danger" @click="remove()">delete</button>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+</form>
+
+<script>
+    function deleteRecord(buttonCls) {
+        new Vue({
+            el: buttonCls,
+            methods: {
+                remove: function() {
+                    if (confirm('Delete this record?')) {
+                        axios.delete('/admin/api/v1/data?model=<# query.model #>&_id=<# query._id #>')
+                            .then(function(res) {
+                                window.location.href = '/admin/model?model=<# query.model #>'
+                            })
+                            .catch(function(err) {
+                                alert(err)
+                            })
+                    }
+                }
+            }
+        })
+    }
+
+    deleteRecord('.delete-record-top')
+    deleteRecord('.delete-record-bottom')
+</script>
+
+{% endblock %}

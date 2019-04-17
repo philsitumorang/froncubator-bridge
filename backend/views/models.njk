@@ -1,0 +1,181 @@
+{% extends './layout.njk' %}
+
+{% block content %}
+
+<div id="models-page" v-cloak>
+
+    <div class="controls-1">
+        <div class="f-input-button search">
+            <form action="/admin/model?model=post&page=1" methods="get">
+                <input type="hidden" name="model" value="<# query.model #>">
+                <input type="hidden" name="page" value="1">
+                <input type="text" name="_search" class="f-input" value="<# query._search #>" placeholder="Search">
+                <button type="submit" class="btn">Find</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="controls-2">
+        <div class="buttons">
+            {% if adminUser.roleRate <= 30 %}
+            <button type="button" class="btn btn-danger" v-if="selected.length > 0" @click="deleteSelected()">delete selected</button>
+            <a href="/admin/model/create?model=<# query.model #>">
+                <button type="button" class="btn">create <# query.model #></button>
+            </a>
+            {% endif %}
+        </div>
+
+        <div class="pagination">
+            <a href="/admin/model?model=<# query.model #>&page={% if query.page and query.page > 1 %}<# query.page - 1 #>{% else %}1{% endif %}">
+                <div class="page-item page-item-first">
+                    <span>&laquo;</span>
+                </div>
+            </a>
+            {% for page in pages %}
+                {% if query._sort %}
+                <a{% if page != '...' %} href="/admin/model?model=<# query.model #>&page=<# page #>&_sort=<# query._sort #>"{% endif %}>
+                    <div class="page-item {% if query.page == page %}active{% endif %}">
+                        <# page #>
+                    </div>
+                </a>
+                {% else %}
+                <a{% if page != '...' %} href="/admin/model?model=<# query.model #>&page=<# page #>"{% endif %}>
+                    <div class="page-item {% if query.page == page %}active{% endif %}">
+                        <# page #>
+                    </div>
+                </a>
+                {% endif %}
+            {% endfor %}
+            <a href="/admin/model?model=<# query.model #>&page={% if query.page and query.page < pageCount %}<# +query.page + 1 #>{% else %}<# pageCount #>{% endif %}">
+                <div class="page-item page-item-last">
+                    <span>&raquo;</span>
+                </div>
+            </a>
+        </div>
+
+    </div>
+    {% if data.length > 0 %}
+    <div class="content-block-center">
+        <table class="f-table mt-3">
+            <thead>
+                <tr>
+                {% if adminUser.roleRate <= 30 %}
+                <th>
+                    <input type="checkbox" class="checkbox" @click="toggleCheckAll($event)">
+                </th>
+                {% endif %}
+                {% for rowName in data[0].modelSchema %}
+                    {% if rowName.show %}
+                        <th>
+                            {% if query._sort == rowName.name + ':asc' %}
+                            <a href="/admin/model?model=<# query.model #>&page=1&_sort=<# rowName.name #>:desc">
+                                <# rowName.verb_name or rowName.name #>
+                                <div class="sort-icons">
+                                    <i class="fas fa-sort-up {% if query._sort == rowName.name + ':asc' %}active{% endif %}"></i>
+                                    <i class="fas fa-sort-down"></i>
+                                </div>
+                            </a>
+                            {% else %}
+                            <a href="/admin/model?model=<# query.model #>&page=1&_sort=<# rowName.name #>:asc">
+                                <# rowName.verb_name or rowName.name #>
+                                <div class="sort-icons">
+                                    <i class="fas fa-sort-up"></i>
+                                    <i class="fas fa-sort-down {% if query._sort == rowName.name + ':desc' %}active{% endif %}"></i>
+                                </div>
+                            </a>
+                            {% endif %}
+                        </th>
+                    {% endif %}
+                {% endfor %}
+                <th><i class="fas fa-pen-square"></i></th>
+                </tr>
+            </thead>
+
+            {% for t in data %}
+            <tr>
+                {% if adminUser.roleRate <= 30 %}
+                <td>
+                    <input type="checkbox" class="checkbox select-checkbox" attr-id="<# t._id #>" @click="toggleCheck($event, '<# t._id #>')">
+                </td>
+                {% endif %}
+                {% for schema in t.modelSchema %}
+                    {% if schema.show %}
+                        {% if schema.link %}
+                        <td><a href="/admin/model/edit?model=<# query.model #>&_id=<# t._id #>"><# t[schema.name] #></a></td>
+                        {% else %}
+                        <td><span><# t[schema.name] #></span></td>
+                        {% endif %}
+                    {% endif %}
+                {% endfor %}
+                <td>
+                    <a href="/admin/model/edit?model=<# query.model #>&_id=<# t._id #>" class="edit-model-pen">
+                        <i class="fas fa-pen-square"></i>
+                    </a>
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+    new Vue({
+        el: '#models-page',
+        data: {
+            selected: []
+        },
+        methods: {
+            toggleCheckAll: function(event) {
+                var self = this
+                if ($(event.target).prop('checked')) {
+                    $('.select-checkbox').each(function() {
+                        self.selected.push($(this).attr('attr-id'))
+                        $(this).prop('checked', true)
+                    })
+                } else {
+                    $('.select-checkbox').each(function() {
+                        $(this).prop('checked', false)
+                    })
+                    self.selected = []
+                }
+            },
+            toggleCheck: function(event, id) {
+                let has = false
+                let index = 0
+
+                for (let s of this.selected) {
+                    if (s == id) {
+                        has = true
+                        break
+                    }
+                    index++
+                }
+
+                if ($(event.target).is(':checked')) {
+                    if (!has) {
+                        this.selected.push(id)
+                    }
+                } else {
+                    this.selected.splice(index, 1)
+                }
+            },
+            deleteSelected: function() {
+                if (confirm('Delete records?')) {
+                    let count = 0
+                    for (let s of this.selected) {
+                        axios.delete('/admin/api/v1/data?model=<# query.model #>&_id=' + s).then(() =>{
+                            count++
+                            if (count == this.selected.length) {
+                                this.selected = []
+                                location.reload()
+                            }
+                        })
+                    }
+                }
+            }
+        }
+    })
+</script>
+
+{% endblock %}

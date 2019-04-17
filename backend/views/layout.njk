@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf8">
+        <script src="https://cdn.ckeditor.com/ckeditor5/10.0.1/classic/ckeditor.js"></script>
+        <link href="https://fonts.googleapis.com/css?family=Roboto|Titillium+Web:200" rel="stylesheet">
+        <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.13/css/all.css" integrity="sha384-DNOHZ68U8hZfKXOrtjWvjxusGo9WQnrNx2sqG0tfsghAvtVlRW3tvkXWZh58N9jp" crossorigin="anonymous">
+        <link rel="stylesheet" href="/admin/static/build/css/build.css?v=<# version #>">
+        <script src="/admin/static/build/scripts/libs.js?v=<# version #>"></script>
+        <script src="/admin/static/build/scripts/build.js?v=<# version #>"></script>
+    </head>
+    <body>
+        <div class="header">
+            <a href="/admin">
+                <div class="logo"></div>
+            </a>
+            <div class="header-user">
+                <span><# adminUser.name #></span> <span>&lt;<# adminUser.email #>&gt;</span> <b>[<# adminUser.role #>]</b>
+            </div>
+        </div>
+
+        <div class="main">
+            <div class="menu menu-1">
+                <a href="/admin">
+                    <div class="menu-item active">
+                        <span>Home</span>
+                        <div class="arrow_box"></div>
+                    </div>
+                </a>
+                <a href="/admin/logout">
+                    <div class="menu-item">
+                        <span>Logout</span>
+                    </div>
+                </a>
+                <div class="copyright">
+                    <a href="https://www.npmjs.com/package/froncubator-bridge" target="_blank">ver. <# projectVersion #></a><br>
+                    Copyright © <# dateNow.year #> <a href="https://froncubator.pro" target="_blank">Froncubator</a>.<br>
+                    All rights reserved.
+                </div>
+            </div>
+            <div class="menu menu-2">
+                {% for model in models %}
+                    {% if (model != 'admin_user' and adminUser.roleRate >= 30) or adminUser.roleRate <= 20 %}
+                    <a href="/admin/model?model=<# model #>&page=1">
+                        <div class="menu-item {% if query.model == model %}active{% endif %}">
+                            <span><# model #></span>
+                        </div>
+                    </a>
+                    {% endif %}
+                {% endfor %}
+            </div>
+            <div class="content-block">
+                {% block content %}
+                {% endblock %}
+            </div>
+        </div>
+
+    </body>
+</html>

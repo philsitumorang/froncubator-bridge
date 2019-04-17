@@ -1,0 +1,46 @@
+<div class="form-group">
+    <label><# s.verb_name or s.name #></label>
+    {% if adminUser.roleRate > 30 %}
+        <input type="text" name="<# s.name #>" disabled value="<# data[0][s.name] #>">
+    {% else %}
+        <div class="input-button-group" id="upload-component-<# s.name #>">
+            <input type="text" name="<# s.name #>" placeholder="Upload file" v-model="file">
+            <button type="button" class="btn btn-danger" v-if="file != ''" @click="deleteFile()">delete</button>
+            <button type="button" class="btn btn-default">upload<input ref="ref-<# s.name #>" type="file" value="" @change="uploadFile('ref-<# s.name #>')"></button>
+            <a :href="file" v-if="file != ''" class="download-file"><i class="fa fa-download"></i></a>
+        </div>
+    {% endif %}
+</div>
+
+<script>
+    new Vue({
+        el: '#upload-component-<# s.name #>',
+        data: {
+            {% if data[0][s.name] %}
+            file: <# (data[0][s.name] | dump | safe) #>
+            {% else %}
+            file: ''
+            {% endif %}
+        },
+        methods: {
+            uploadFile: function(fieldName) {
+                let data = new FormData()
+                data.append('upload', this.$refs[fieldName].files[0])
+
+                axios.post('/admin/api/v1/data/file', data).then((res) => {
+                    let data = res.data
+                    $('input[name="<# s.name #>"]').val(data.url)
+                })
+                .catch((err) => {
+                    console.log(err)
+                })
+            },
+            deleteFile: function() {
+                if (confirm('Delete file?')) {
+                    $('input[name="<# s.name #>"]').val('')
+                    this.file = ''
+                }
+            }
+        }
+    })
+</script>

@@ -1,0 +1,13 @@
+<label><# s.verb_name or s.name #></label>
+<textarea name="<# s.name #>" id="editor-<# s.name #>"><# data[0][s.name] #></textarea>
+<script>
+    ClassicEditor
+        .create(document.querySelector('#editor-<# s.name #>'), {
+            ckfinder: {
+                uploadUrl: '/admin/api/v1/data/image_textrich'
+            }
+        })
+        .catch(error => {
+            console.error(error)
+        });
+</script>

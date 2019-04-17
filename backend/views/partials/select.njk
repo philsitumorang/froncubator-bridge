@@ -1,0 +1,281 @@
+<script>
+    function initSelector(relation, model, name, component) {
+        new Vue({
+            el: '#select-' + relation,
+            data: {
+                schema: [],
+                opened: false,
+                mainField: '',
+                modelData: [],
+                selected: {},
+                selectedMulty: [],
+                query: '',
+                valuesInSchema: false
+            },
+            methods: {
+                toggleArrow: function() {
+                    this.opened = !this.opened
+                    if (this.opened) {
+                        this.load()
+                    }
+                },
+                loadFromServer: function(specField, value) {
+                    if (specField != undefined && value != undefined) {
+                        url = '/admin/api/v1/data?model=' + relation + '&' + specField + '=' + value
+                    } else if (this.query == '') {
+                        url = '/admin/api/v1/data?model=' + relation + ''
+                    } else {
+                        // url = '/admin/api/v1/data?model=' + relation + '&' + this.mainField + '=' + this.query
+                        url = '/admin/api/v1/data?model=' + relation + '&_search=' + this.query
+                    }
+
+                    this.modelData = []
+
+                    axios.get(url).then((res) => {
+                        let data = res.data.data
+                        if (data.length == 0)
+                            return false
+
+                        this.modelData = data
+                        this.opened = true
+
+                        if (specField != undefined && value != undefined) {
+                            this.select(data[0])
+                        }
+                    })
+                },
+                searchValues: function(data) {
+                    let result = false
+                    if (data.toLowerCase().indexOf(this.query.toLowerCase()) != -1)
+                        result = true
+                    return result
+                },
+                change: function() {
+                    if (this.query == '')
+                        this.select('')
+                    else
+                        this.load()
+                },
+                load: function(specField, value) {
+                    if (this.valuesInSchema) {
+                        this.opened = true
+                    } else {
+                        this.loadFromServer(specField, value)
+                    }
+                },
+                select: function(data) {
+                    if (this.valuesInSchema) {
+                        if (data != '') {
+                            if (component == 'select-multy') {
+                                let has = false
+
+                                for (let s of this.selectedMulty) {
+                                    if (s == data)
+                                        has = true
+                                }
+
+                                if (has)
+                                    return false
+
+                                this.selected = data
+                                this.query = ''
+                                this.opened = false
+
+                                $('#select-' + relation).parent().append('<input type="hidden" name="' + name + '[]" value="' + this.selected + '">')
+                                this.selectedMulty.push(this.selected)
+
+                            } else {
+                                this.selected = data
+                                this.query = this.selected
+                                this.opened = false
+                                document.querySelector('input[name="' + name + '"]').setAttribute('value', this.selected)
+                            }
+                        } else {
+                            document.querySelector('input[name="' + name + '"]').setAttribute('value', '')
+                        }
+                    } else {
+                        if (component == 'select-multy') {
+                            let has = false
+
+                            for (let s of this.selectedMulty) {
+                                if (s._id == data._id)
+                                    has = true
+                            }
+
+                            if (has)
+                                return false
+
+                            this.selected = data
+                            this.query = ''
+                            this.opened = false
+
+                            $('#select-' + relation).parent().append('<input type="hidden" name="' + name + '[]" value="' + this.selected._id + '">')
+                            this.selectedMulty.push(this.selected)
+                        } else {
+                            if (data != '') {
+                                this.selected = data
+                                this.query = this.selected[this.mainField]
+                                this.opened = false
+                                document.querySelector('input[name="' + name + '"]').setAttribute('value', this.selected._id)
+                            } else {
+                                document.querySelector('input[name="' + name + '"]').setAttribute('value', '')
+                            }
+                        }
+                    }
+                },
+                deleteMultyItem: function(data) {
+                    if (this.valuesInSchema) {
+                        for (let i = 0; i < this.selectedMulty.length; i++) {
+                            if (this.selectedMulty[i] == data) {
+                                this.selectedMulty.splice(i, 1)
+                                break
+                            }
+                        }
+                        $('#select-' + relation).parent().find('input[name="' + name + '[]"][value="' + data + '"]').remove()
+                    } else {
+                        for (let i = 0; i < this.selectedMulty.length; i++) {
+                            if (this.selectedMulty[i]._id == data._id) {
+                                this.selectedMulty.splice(i, 1)
+                                break
+                            }
+                        }
+                        $('#select-' + relation).parent().find('input[name="' + name + '[]"][value="' + data._id + '"]').remove()
+                    }
+
+                    $('#select-' + relation).parent().find('input[name="' + name + '[]"][value="[]"]').remove()
+                    if (this.selectedMulty.length == 0)
+                        $('#select-' + relation).parent().append('<input type="hidden" name="' + name + '[]" value="[]">')
+                }
+            },
+            mounted: function() {
+                axios.get('/admin/api/v1/model/schema?model=' + (relation || model)).then((res) => {
+                    this.mainField = ''
+                    this.schema = res.data
+                    let mainFieldFound = false
+                    let valuesInSchemaFound = false
+
+                    if (relation) {
+                        for (let field of this.schema) {
+                            if (!mainFieldFound) {
+                                if (field.selectTitle !== undefined && field.selectTitle) {
+                                    console.log('@@@@@@@@@@@@@@@@', field)
+                                    this.mainField = field.name
+                                    mainFieldFound = true
+                                }
+                            }
+                        }
+                    } else if (model) {
+                        for (let field of this.schema) {
+                            if (!valuesInSchemaFound) {
+                                if (field.values != undefined && field.values.length > 0) {
+                                    this.valuesInSchema = true
+                                    this.modelData = field.values
+                                    valuesInSchemaFound = true
+                                }
+                            }
+                        }
+                    }
+
+                    {% if data[0][s.name].length > 0 %}
+                    this.selectedMulty = <# data[0][s.name] | dump | safe #>
+                    if (Array.isArray(this.selectedMulty)) {
+                        for (let s of this.selectedMulty) {
+                            if (this.valuesInSchema) {
+                                $('#select-' + relation).parent().append('<input type="hidden" name="' + name + '[]" value="' + s + '">')
+                            } else {
+                                $('#select-' + relation).parent().append('<input type="hidden" name="' + name + '[]" value="' + s._id + '">')
+                            }
+                        }
+                    }
+                    {% endif %}
+
+                    if (component == 'select') {
+                        let input = document.querySelector('input[name="' + name + '"]')
+                        if (input.getAttribute('value') != '') {
+                            if (this.valuesInSchema)
+                                this.select(input.getAttribute('value'))
+                            else
+                                this.load('_id', input.getAttribute('value'))
+                        }
+                    }
+                })
+            }
+        })
+    }
+</script>
+
+<label><# s.verb_name or s.name #></label>
+
+{% if s.component == 'select' %}
+<div id="select-<# s.relation #>" class="select" model="<# s.relation #>">
+    <div class="select-input">
+        <input type="hidden" value="<# data[0][s.name] #>" name="<# s.name #>">
+        <input type="text" @focus="toggleArrow()" @input="change()" v-bind:class="{ 'select-opened': opened }" v-model="query" placeholder="Select data`s <# s.relation #>">
+        <div class="arrow">
+            <i class="fas" @click="toggleArrow()" v-bind:class="{ 'fa-angle-up': opened, 'fa-angle-down': !opened }"></i>
+        </div>
+        <div class="select-popup-wrapper">
+            <div class="select-popup" v-show="opened">
+                <div v-if="!valuesInSchema">
+                    <div class="select-popup-item" v-for="data in modelData" @click="select(data)">
+                        {{ data[mainField] }}
+                        <small>{{ data._id }}</small>
+                    </div>
+                </div>
+
+                <div v-if="valuesInSchema">
+                    <div class="select-popup-item" v-for="data in modelData" v-if="searchValues(data)" @click="select(data)">
+                        {{ data }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    initSelector('<# s.relation #>', '<# query.model #>', '<# s.name #>', '<# s.component #>')
+</script>
+{% elif s.component == 'select-multy' %}
+<div id="select-<# s.relationMulty #>" v-cloak class="select" model="<# s.relationMulty #>">
+    <div class="select-input">
+        <input type="text" @focus="toggleArrow()" @input="change()" v-bind:class="{ 'select-opened': opened }" v-model="query" placeholder="Select data`s <# s.relationMulty #>">
+        <div class="arrow">
+            <i class="fas" @click="toggleArrow()" v-bind:class="{ 'fa-angle-up': opened, 'fa-angle-down': !opened }"></i>
+        </div>
+        <div class="select-popup-wrapper">
+            <div class="select-popup" v-show="opened">
+                <div v-if="!valuesInSchema">
+                    <div class="select-popup-item" v-for="data in modelData" @click="select(data)">
+                        {{ data[mainField] }}
+                        <small>{{ data._id }}</small>
+                    </div>
+                </div>
+
+                <div v-if="valuesInSchema">
+                    <div class="select-popup-item" v-for="data in modelData" v-if="searchValues(data)" @click="select(data)">
+                        {{ data }}
+                    </div>
+                </div>
+            </div>
+            <div class="multies" v-if="selectedMulty.length > 0">
+                <div class="multy-item" v-for="sm in selectedMulty">
+                    <div class="check-toggle">
+                        <i class="check fas fa-check-circle"></i>
+                        <i class="minus fas fa-minus-circle" @click="deleteMultyItem(sm)"></i>
+                    </div>
+                    <div v-if="!valuesInSchema">
+                        {{ sm[mainField] }}
+                        <small>{{ sm._id }}</small>
+                    </div>
+                    <div v-if="valuesInSchema">
+                        {{ sm }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    initSelector('<# s.relationMulty #>', '<# query.model #>', '<# s.name #>', '<# s.component #>')
+</script>
+{% endif %}

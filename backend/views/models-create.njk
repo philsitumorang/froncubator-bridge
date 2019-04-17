@@ -1,0 +1,54 @@
+{% extends './layout.njk' %}
+
+{% block content %}
+
+<form id="models-edit-form" action="/admin/model/create/save" method="post">
+    <div class="controls-2 text-left">
+        <h3>Create <# query.model #></h3>
+    </div>
+
+    <div class="f-form">
+        <div class="content-block-center">
+            {% for s in schema %}
+                {% if s.component == 'input-text' %}
+                    <div class="form-group">
+                        <label><# s.verb_name or s.name #></label>
+                        <input type="text" name="<# s.name #>" autocomplete="new-password" value="<# data[0][s.name] #>">
+                    </div>
+                {% elif s.component == 'input-password' %}
+                    <div class="form-group">
+                        <label><# s.verb_name or s.name #></label>
+                        <input type="password" autocomplete="new-password" name="<# s.name #>" value="<# data[0][s.name] #>">
+                    </div>
+                {% elif s.component == 'input-file' %}
+                    {% include './partials/uploadfile.njk' %}
+                {% elif s.component == 'input-image' %}
+                    {% include './partials/uploadimage.njk' %}
+                {% elif s.component == 'textarea' %}
+                    <div class="form-group">
+                        <label><# s.verb_name or s.name #></label>
+                        <textarea name="<# s.name #>"><# data[0][s.name] #></textarea>
+                    </div>
+                {% elif s.component == 'textarea-rich' %}
+                    <div class="form-group">
+                        {% include './partials/textarea-rich.njk' %}
+                    </div>
+                {% elif s.component == 'select' or s.component == 'select-multy' %}
+                    <div class="form-group">
+                        {% include './partials/select.njk' %}
+                    </div>
+                {% elif s.component == 'checkbox' %}
+                    <div class="form-group">
+                        {% include './partials/checkbox.njk' %}
+                    </div>
+                {% endif %}
+            {% endfor %}
+            <div class="form-group form-controls">
+                <input type="hidden" name="model" value="<# query.model #>">
+                <button type="submit" class="btn btn-primary">create</button>
+            </div>
+        </div>
+    </div>
+</form>
+
+{% endblock %}

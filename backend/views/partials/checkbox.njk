@@ -1,0 +1,7 @@
+<div class="checkbox-component">
+    <label>
+        <input type="checkbox"{% if data[0][s.name] %}checked{% endif %} onclick="toggleCheckBox(event, '<# s.name #>')">
+        <span><# s.verb_name or s.name #></span>
+    </label>
+    <input type="hidden" name="<# s.name #>" value="{% if data[0][s.name] %}true{% else %}false{% endif %}">
+</div>
