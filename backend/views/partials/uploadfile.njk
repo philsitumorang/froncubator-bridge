@@ -9,6 +9,9 @@
             <button type="button" class="btn btn-default">upload<input ref="ref-<# s.name #>" type="file" value="" @change="uploadFile('ref-<# s.name #>')"></button>
             <a :href="file" v-if="file != ''" class="download-file"><i class="fa fa-download"></i></a>
         </div>
+        <div v-if="progress != null">
+            <span>Loading: <# progress #>%</span>
+        </div>
     {% endif %}
 </div>
 
@@ -17,17 +20,24 @@
         el: '#upload-component-<# s.name #>',
         data: {
             {% if data[0][s.name] %}
-            file: <# (data[0][s.name] | dump | safe) #>
+            file: <# (data[0][s.name] | dump | safe) #>,
             {% else %}
-            file: ''
+            file: '',
             {% endif %}
+            progress: null
         },
         methods: {
             uploadFile: function(fieldName) {
                 let data = new FormData()
                 data.append('upload', this.$refs[fieldName].files[0])
 
-                axios.post('/admin/api/v1/data/file', data).then((res) => {
+                axios.post('/admin/api/v1/data/file', data, {
+                    onUploadProgress: progressEvent => {
+                        const pCent = Math.round((progressEvent * 100) / progressEvent.total);
+                        this.progress = pCent;
+                        console.log(this.progress);
+                    }
+                }).then((res) => {
                     let data = res.data
                     $('input[name="<# s.name #>"]').val(data.url)
                 })

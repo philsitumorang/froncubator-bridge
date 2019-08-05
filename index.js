@@ -46,18 +46,18 @@ module.exports = async function (app, config) {
 
     await backend(app, config)
 
-    // exec(`cd ${__dirname}/frontend && gulp`, (error, stdout, stderr) => {
-    //     logInfo(null, '[froncubator-bridge] build frontend...')
+    exec(`cd ${__dirname}/frontend && gulp`, (error, stdout, stderr) => {
+        logInfo(null, '[froncubator-bridge] build frontend...')
 
-    //     if (error) {
-    //         logErr(null, chalk.red('[froncubator-bridge] ') + error)
-    //         return false
-    //     }
+        if (error) {
+            logErr(null, chalk.red('[froncubator-bridge] ') + error)
+            return false
+        }
 
-    //     logInfo(null, chalk.green('[froncubator-bridge] ') + stdout)
+        logInfo(null, chalk.green('[froncubator-bridge] ') + stdout)
 
-    //     if (stderr) {
-    //         logErr(null, chalk.red('[froncubator-bridge] ') + stderr)
-    //     }
-    // })
+        if (stderr) {
+            logErr(null, chalk.red('[froncubator-bridge] ') + stderr)
+        }
+    })
 }

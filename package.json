@@ -68,5 +68,5 @@
   "main": "index.js",
   "name": "froncubator-bridge",
   "scripts": {},
-  "version": "0.0.57"
+  "version": "0.0.61"
 }
