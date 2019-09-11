@@ -3,14 +3,16 @@
     {% if adminUser.roleRate > 30 %}
         <input type="text" name="<# s.name #>" disabled value="<# data[0][s.name] #>">
     {% else %}
-        <div class="input-button-group" id="upload-component-<# s.name #>">
-            <input type="text" name="<# s.name #>" placeholder="Upload file" v-model="file">
-            <button type="button" class="btn btn-danger" v-if="file != ''" @click="deleteFile()">delete</button>
-            <button type="button" class="btn btn-default">upload<input ref="ref-<# s.name #>" type="file" value="" @change="uploadFile('ref-<# s.name #>')"></button>
-            <a :href="file" v-if="file != ''" class="download-file"><i class="fa fa-download"></i></a>
-        </div>
-        <div v-if="progress != null">
-            <span>Loading: <# progress #>%</span>
+        <div id="upload-component-<# s.name #>">
+            <div class="input-button-group">
+                <input type="text" name="<# s.name #>" placeholder="Upload file" v-model="file">
+                <button type="button" class="btn btn-danger" v-if="file != ''" @click="deleteFile()">delete</button>
+                <button type="button" class="btn btn-default">upload<input ref="ref-<# s.name #>" type="file" value="" @change="uploadFile('ref-<# s.name #>')"></button>
+                <a :href="file" v-if="file != ''" class="download-file"><i class="fa fa-download"></i></a>
+            </div>
+            <div v-if="progress != null" style="padding-top: 7px;">
+                <span>Loading: {{ progress }}</span>
+            </div>
         </div>
     {% endif %}
 </div>
@@ -33,13 +35,17 @@
 
                 axios.post('/admin/api/v1/data/file', data, {
                     onUploadProgress: progressEvent => {
-                        const pCent = Math.round((progressEvent * 100) / progressEvent.total);
-                        this.progress = pCent;
-                        console.log(this.progress);
+                        const pCent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+                        if (pCent === 100) {
+                            this.progress = '99%';
+                        } else {
+                            this.progress = pCent + '%';
+                        }
                     }
                 }).then((res) => {
-                    let data = res.data
-                    $('input[name="<# s.name #>"]').val(data.url)
+                    let data = res.data;
+                    $('input[name="<# s.name #>"]').val(data.url);
+                    this.progress = 'done';
                 })
                 .catch((err) => {
                     console.log(err)

@@ -21,7 +21,8 @@ async function connect() {
     }
 
     let mongooseOptions = {
-        useNewUrlParser: true
+        useNewUrlParser: true,
+        useUnifiedTopology: true
     }
 
     try {
