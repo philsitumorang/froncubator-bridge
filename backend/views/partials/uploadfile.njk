@@ -45,6 +45,7 @@
                 }).then((res) => {
                     let data = res.data;
                     $('input[name="<# s.name #>"]').val(data.url);
+                    this.file = data.url;
                     this.progress = 'done';
                 })
                 .catch((err) => {
